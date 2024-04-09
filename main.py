@@ -12,6 +12,7 @@ import win32event
 import win32api
 from winerror import ERROR_ALREADY_EXISTS
 from tkinter import messagebox
+import keyboard  # You might need to install this library
 
 # Create a named mutex that's unique to your application
 mutex = win32event.CreateMutex(None, False, 'Global\\YourAppUniqueMutexName')
@@ -71,7 +72,8 @@ def encode_image(image):
 # Function to send image to OpenAI Vision API
 def send_to_openai_vision_api(base64_image):
     # api_key = "YOUR_OPENAI_API_KEY"  # Replace with your actual OpenAI API key
-    api_key = "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"
+    # api_key = "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"
+    api_key = load_api_key()  # Load the API key from file
     headers = {
         "Authorization": f"Bearer {api_key}"
     }
@@ -126,6 +128,7 @@ def on_clicked(icon):
     thread = threading.Thread(target=process_screenshot, args=(loading_window,))
     thread.start()
 
+
 # Function to process the screenshot
 def process_screenshot(loading_window):
     image = get_image_from_clipboard()
@@ -143,20 +146,58 @@ def exit_action(icon):
   icon.stop()
   sys.exit(0)  # Exit the application
 
+def save_api_key(key):
+    with open("api_key.txt", "w") as file:
+        file.write(key)
+
+def load_api_key():
+    try:
+        with open("api_key.txt", "r") as file:
+            return file.read().strip()
+    except FileNotFoundError:
+        return ""
+def open_settings_window():
+    settings_window = Toplevel(root)
+    settings_window.title("Settings")
+    settings_window.geometry("300x100")
+
+    tk.Label(settings_window, text="OpenAI API Key:").pack(pady=(10, 0))
+
+    api_key_entry = tk.Entry(settings_window)
+    api_key_entry.pack(pady=5)
+    api_key_entry.insert(0, load_api_key())  # Load the existing API key if available
+
+    def save_and_close():
+        save_api_key(api_key_entry.get())
+        settings_window.destroy()
+
+    tk.Button(settings_window, text="Save", command=save_and_close).pack(pady=(5, 10))
+
+
+
 
 # Setup the menu for the system tray icon
 menu = Menu(
   item('Capture & Send', on_clicked),
+  item('Settings', lambda icon, item: open_settings_window()),  # Add this line  
   item('Exit', exit_action)
 )
 
 def setup(icon):
     icon.visible = True
 
+
 # System tray icon setup
 icon_path = os.path.join(basedir, 'icon.png')
     
 icon = Icon("test_icon", Image.open(icon_path), "Screenshot Tool", menu=menu)
+
+
+def on_ctrl_m_pressed():
+    on_clicked(icon)  # Call the function you want to trigger
+
+# Listen for the 'Ctrl+M' hotkey
+keyboard.add_hotkey('ctrl+m', on_ctrl_m_pressed)    
 
 # Run the icon in a thread to prevent blocking
 icon_thread = threading.Thread(target=icon.run, args=(setup,))
