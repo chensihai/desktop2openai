@@ -15,7 +15,7 @@ from tkinter import messagebox
 import keyboard  # You might need to install this library
 
 # Create a named mutex that's unique to your application
-mutex = win32event.CreateMutex(None, False, 'Global\\YourAppUniqueMutexName')
+mutex = win32event.CreateMutex(None, False, 'Global\\desktop2openai')
 
 # Check if the mutex is already exists which indicates another instance is running
 last_error = win32api.GetLastError()
@@ -205,3 +205,4 @@ icon_thread.start()
 
 # Start the main Tkinter loop in a way that it doesn't block
 root.mainloop()
+
